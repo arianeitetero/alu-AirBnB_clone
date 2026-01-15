@@ -1,90 +1,68 @@
-#!/usr/bin/env python
-"""A module that that serializes instances to a JSON file and deserializes
-JSON file to instances"""
-
+#!/usr/bin/python3
+"""This module defines a class to manage file storage for hbnb clone"""
 import json
-import os
-from models.base_model import BaseModel
-from models.user import User
-from models.amenity import Amenity
-from models.city import City
-from models.place import Place
-from models.review import Review
-from models.state import State
 
 
 class FileStorage:
-
-    # private class attributes
-    # __file_path is the path to the JSON file to store all objects.
-    __file_path = 'storage.json'
-
-    # __objects is a dictionary that stores all objects by <class name>.id
-    # ex: to store a BaseModel object with id=12121212, the key will be
-    # BaseModel.12121212 and the value will be the object.
-    # the object (value of key) is stored like this:
-    # <models.base_model.BaseModel object at 0x7f3329dac310>
-    # obects = {BaseModel.12121212: }
+    """This class manages storage of hbnb models in JSON format"""
+    __file_path = 'file.json'
     __objects = {}
 
     def all(self, cls=None):
-        """Returns a list of all objects if cls is None. If cls is provided, return all objects of that type.
-        """
-
+        """Returns a dictionary of models currently in storage"""
         if cls is not None:
-
-            obj = {}
-            print(FileStorage.__objects.items())
+            temp = {}
             for key, val in FileStorage.__objects.items():
-                if cls.__name__ in key:
-                    obj[key] = val
-            return obj
-        else:
-            return self.__objects
+                if cls == val.__class__:
+                    temp[key] = val
+            return temp
 
-    # sets in __objects the obj with key <obj class name>.id
+        return FileStorage.__objects
+
     def new(self, obj):
-        """Add obj with key <obj class name>.id to dictionary.
+        """Adds new object to storage dictionary"""
+        self.all().update({obj.to_dict()['__class__'] + '.' + obj.id: obj})
 
-        Args:
-
-        obj: the object with key <obj class name>.id
-        """
-        key = obj.__class__.__name__ + '.' + obj.id
-        # json_data = json.dump(obj)
-        self.__objects[key] = obj
-
-    # serializes __objects to the JSON file (path: __file_path)
     def save(self):
-        """ Serializes __objects to the JSON file (path: __file_path)."""
-        json_obj = {}
-        for key in self.__objects.keys():
-            json_obj[key] = self.__objects[key].to_dict()
-
-        with open(self.__file_path, 'w') as json_file:
-            json.dump(json_obj, json_file)
+        """Saves storage dictionary to file"""
+        with open(FileStorage.__file_path, 'w') as f:
+            temp = {}
+            temp.update(FileStorage.__objects)
+            for key, val in temp.items():
+                temp[key] = val.to_dict()
+            json.dump(temp, f)
 
     def reload(self):
-        """Deserializes the JSON file to __objects (only if the JSON file"""
-        """(path: __file_path) exists ; otherwise, do nothing."""
-        if os.path.exists(self.__file_path):
-            with open(self.__file_path, 'r') as json_file:
-                json_obj = json.load(json_file)
-                for key in json_obj.keys():
+        """Loads storage dictionary from file"""
+        from models.base_model import BaseModel
+        from models.user import User
+        from models.place import Place
+        from models.state import State
+        from models.city import City
+        from models.amenity import Amenity
+        from models.review import Review
 
-                    # By providing the dict value stored in json_obj[key] as
-                    # kwargs, genrate an object with the same attributes
-                    self.__objects[key] = eval(
-                        json_obj[key]['__class__'])(**json_obj[key])
+        classes = {
+            'BaseModel': BaseModel, 'User': User, 'Place': Place,
+            'State': State, 'City': City, 'Amenity': Amenity,
+            'Review': Review
+        }
+        try:
+            temp = {}
+            with open(FileStorage.__file_path, 'r') as f:
+                temp = json.load(f)
+                for key, val in temp.items():
+                    self.all()[key] = classes[val['__class__']](**val)
+        except FileNotFoundError:
+            pass
 
     def delete(self, obj=None):
         """Delete an object from the __objects"""
         if obj is not None:
-            for key, val in list(FileStorage.__objects.items()):
-                if obj == val:
-                    del FileStorage.__objects[key]
-                    print("Deleted: {}".format(key))
-                    self.save()
-                    
+            key = obj.__class__.__name__ + '.' + obj.id
+            if key in self.__objects:
+                del self.__objects[key]
+                self.save()
+
     def close(self):
         self.reload()

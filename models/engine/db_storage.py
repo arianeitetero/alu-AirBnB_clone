@@ -26,7 +26,9 @@ class DBStorage:
         passwd = os.getenv('HBNB_MYSQL_PWD')
         host = os.getenv('HBNB_MYSQL_HOST')
         db = os.getenv('HBNB_MYSQL_DB')
+        port = os.getenv('HBNB_MYSQL_PORT')
         env = os.getenv('HBNB_ENV')
+        # storage_type = os.getenv('HBNB_STORAGE_TYPE')
 
         db_path = ('mysql+mysqldb://{}:{}@{}/{}'
                    .format(user, passwd, host, db))
@@ -78,6 +80,9 @@ class DBStorage:
         Session = scoped_session(sec)
         # create a Session
         self.__session = Session()
+
+        # Base.metadata.create_all(self.__engine)
+        # self.__session = scoped_session(sessionmaker(bind=self.__engine))
 
     def close(self):
         self.__session.close()
