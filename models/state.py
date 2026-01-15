@@ -1,34 +1,33 @@
 #!/usr/bin/python3
-""" State Module for HBNB project """
-from models.base_model import BaseModel, Base
-# import sqlalchemy modules
-from sqlalchemy import Column, String
+""" holds class State"""
+from models.base_model import BaseModel
+from models.city import City
+from models.config import storage_t  # <- import from config
+from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.orderinglist import ordering_list
 
 
-class State(BaseModel, Base):
+class State(BaseModel):
+    """Representation of a State"""
 
-    """This is the class for State
-    Attributes:
-        name: input name
-    """
-    __tablename__ = "states"
-    # write a code to make BaseModel column order first in the table
+    if storage_t == "db":
+        __tablename__ = 'states'
+        name = Column(String(128), nullable=False)
+        cities = relationship("City", backref="state")
+    else:
+        name = ""
 
-    name = Column(String(128), nullable=False)
-    cities = relationship("City", cascade='all, delete, delete-orphan',
-                          backref="state")
-    # write a code to make BaseModel column order first in the table
+    def __init__(self, *args, **kwargs):
+        """initializes state"""
+        super().__init__(*args, **kwargs)
 
-    @property
-    def cities(self):
-        """getter attribute cities that returns the list of City objects
-        from storage linked to the current State"""
-        from models import storage
-        from models.city import City
-        cities = []
-        for key, value in storage.all(City).items():
-            if value.state_id == self.id:
-                cities.append(value)
-        return cities
+    if storage_t != "db":
+        @property
+        def cities(self):
+            """getter for list of city instances related to the state"""
+            city_list = []
+            from models import storage  # local import avoids circular import
+            all_cities = storage.all(City)
+            for city in all_cities.values():
+                if city.state_id == self.id:
+                    city

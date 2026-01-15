@@ -1,19 +1,16 @@
 #!/usr/bin/python3
-""" A script that starts a Flask web application and do some dummy stuff
-
-Returns:
-    _type_: _description_
 """
-from flask import Flask
+start Flask application
+"""
 
+from flask import Flask
 app = Flask(__name__)
 
 
-@app.route("/", strict_slashes=False)
-def hello():
-    return "Hello HBNB!"
-
+@app.route('/', strict_slashes=False)
+def index():
+    """returns Hello HBNB!"""
+    return 'Hello HBNB!'
 
 if __name__ == '__main__':
-    # start the flask app
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port='5000')
